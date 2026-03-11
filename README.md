@@ -1,44 +1,90 @@
-<p align="center"><a href="https://open5gs.org" target="_blank" rel="noopener noreferrer"><img width="100" src="https://open5gs.org/assets/img/open5gs-logo-only.png" alt="Open5GS logo"></a></p>
+# Open5GS Roaming Setup
 
-## Getting Started
+## Modified Source Files
 
-Please follow the [documentation](https://open5gs.org/open5gs/docs/) at [open5gs.org](https://open5gs.org/)!
+**`lib/sbi/message.c`**
 
-## Sponsors
+**`src/amf/`**
+- `amf-sm.c`
+- `namf-handler.h`
+- `namf-handler.c`
 
-If you find Open5GS useful for work, please consider supporting this Open Source project by [Becoming a sponsor](https://github.com/sponsors/acetcom). To manage the funding transactions transparently, you can donate through [OpenCollective](https://opencollective.com/open5gs).
+**`src/smf/`**
+- `smf-sm.c`
+- `nsmf-handler.h`
+- `nsmf-handler.c`
 
-<p align="center">
-  <h3 align="center">Special Sponsor</h3>
-</p>
+---
 
-<p align="center">
-  <a target="_blank" href="https://mobi.com">
-  <img alt="special sponsor mobi" src="https://open5gs.org/assets/img/mobi-open5GS.png" width="400">
-  </a>
-</p>
+## Build & Install
 
-<p align="center">
-  <a target="_blank" href="https://open5gs.org/#sponsors">
-      <img alt="sponsors" src="https://open5gs.org/assets/img/sponsors.svg">
-  </a>
-</p>
+After modifying the source code, rebuild and install with:
+```bash
+meson compile -C build
+meson install -C build
+```
 
-## Community
+---
 
-- Problem with Open5GS can be filed as [issues](https://github.com/open5gs/open5gs/issues) in this repository.
-- Other topics related to this project are happening on the [discussions](https://github.com/open5gs/open5gs/discussions).
-- Voice and text chat are available in Open5GS's [Discord](https://discordapp.com/) workspace. Use [this link](https://discord.gg/GreNkuc) to get started.
+## Configuration
 
-## Contributing
+The YAML config files are located at `install/etc/open5gs/`.
 
-If you're contributing through a pull request to Open5GS project on GitHub, please read the [Contributor License Agreement](https://open5gs.org/open5gs/cla/) in advance.
+> ⚠️ **Note:** Update file paths to match local environment.  
+> For example, in `amf.yaml`, update the logger path:
+```yaml
+logger:
+  file:
+    path: /home/<your-username>/open5gs/install/var/log/open5gs/amf.log
+#  level: info   # fatal|error|warn|info(default)|debug|trace
+```
 
-## License
+All other configuration values remain unchanged.
 
-- Open5GS Open Source files are made available under the terms of the GNU Affero General Public License ([GNU AGPL v3.0](https://www.gnu.org/licenses/agpl-3.0.html)).
-- [Commercial licenses](https://open5gs.org/open5gs/support/) are also available from [NewPlane](https://newplane.io/) at [sales@newplane.io](mailto:sales@newplane.io).
+---
 
-## Support
+## Starting the Core Networks
 
-Technical support and customized services for Open5GS are provided by [NewPlane](https://newplane.io/) at [support@newplane.io](mailto:support@newplane.io).
+### Home Network
+```bash
+sudo ./install/bin/open5gs-nrfd -c ./install/etc/open5gs/h-nrf.yaml
+./install/bin/open5gs-scpd -c ./install/etc/open5gs/h-scp.yaml
+sudo ./install/bin/open5gs-ausfd
+sudo ./install/bin/open5gs-udmd
+./install/bin/open5gs-udrd
+./install/bin/open5gs-amfd -c ./install/etc/open5gs/h-amf.yaml
+sudo ./install/bin/open5gs-smfd -c ./install/etc/open5gs/h-smf.yaml
+sudo ./install/bin/open5gs-upfd -c ./install/etc/open5gs/h-upf.yaml
+./install/bin/open5gs-pcfd -c ./install/etc/open5gs/h-pcf.yaml
+./install/bin/open5gs-bsfd -c ./install/etc/open5gs/h-bsf.yaml
+sudo ./install/bin/open5gs-nssfd -c ./install/etc/open5gs/h-nssf.yaml
+./install/bin/open5gs-seppd -c ./install/etc/open5gs/sepp1.yaml
+```
+
+### Visited Network
+```bash
+sudo ./install/bin/open5gs-nrfd
+./install/bin/open5gs-scpd
+./install/bin/open5gs-amfd
+sudo ./install/bin/open5gs-smfd
+./install/bin/open5gs-upfd
+./install/bin/open5gs-pcfd
+./install/bin/open5gs-bsfd
+sudo ./install/bin/open5gs-nssfd
+./install/bin/open5gs-seppd -c ./install/etc/open5gs/sepp2.yaml
+```
+
+---
+
+## PacketRusher Config Files
+
+> These are the config files used in this project. The full PacketRusher repository contains additional files.
+
+`roaming-vplmn-001-hplmn-999.yaml`： Roaming config,supports both 
+`hplmn-999.yaml`: Config for connecting to the Home Network only
+
+---
+
+## Testing
+
+`test.py` can be run to reproduce the AMF and SMF logs demonstrated in the meeting on 2026-03-11.

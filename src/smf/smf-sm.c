@@ -793,7 +793,36 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
                         sbi_message.h.resource.component[0], NULL));
             END
             break;
-
+        
+        CASE("nsco-nsmf-pdusession")
+            SWITCH(sbi_message.h.resource.component[0])
+            CASE("handover-sm-contexts")
+                SWITCH(sbi_message.h.method)
+                CASE(OGS_SBI_HTTP_METHOD_POST)
+                    smf_nsco_handle_create_sm_context(
+                            stream, &sbi_message);
+                    break;
+                DEFAULT
+                    ogs_error("Invalid HTTP method [%s]",
+                            sbi_message.h.method);
+                    ogs_assert(true ==
+                        ogs_sbi_server_send_error(stream,
+                            OGS_SBI_HTTP_STATUS_FORBIDDEN, &sbi_message,
+                            "Invalid HTTP method", sbi_message.h.method,
+                            NULL));
+                END
+                break;
+            DEFAULT
+                ogs_error("Invalid resource name [%s]",
+                        sbi_message.h.resource.component[0]);
+                ogs_assert(true ==
+                    ogs_sbi_server_send_error(stream,
+                        OGS_SBI_HTTP_STATUS_BAD_REQUEST, &sbi_message,
+                        "Invalid resource name",
+                        sbi_message.h.resource.component[0], NULL));
+            END
+            break;
+    
         DEFAULT
             ogs_error("Invalid API name [%s]", sbi_message.h.service.name);
             ogs_assert(true ==

@@ -2371,6 +2371,7 @@ static int parse_json(ogs_sbi_message_t *message,
             END
             break;
 
+        CASE("nsco-nsmf-pdusession")
         CASE(OGS_SBI_SERVICE_NAME_NSMF_PDUSESSION)
             SWITCH(message->h.resource.component[0])
             CASE(OGS_SBI_RESOURCE_NAME_SM_CONTEXTS)
@@ -2615,13 +2616,26 @@ static int parse_json(ogs_sbi_message_t *message,
                 END
                 break;
 
+            
+            CASE("handover-sm-contexts")
+                if (message->res_status == 0) {
+                    message->SmContextCreateData =
+                        OpenAPI_sm_context_create_data_parseFromJSON(item);
+                    if (!message->SmContextCreateData) {
+                        rv = OGS_ERROR;
+                        ogs_error("JSON parse error");
+                    }
+                }                
+                break;
+
             DEFAULT
                 rv = OGS_ERROR;
                 ogs_error("Unknown resource name [%s]",
                         message->h.resource.component[0]);
             END
             break;
-
+        
+        CASE("nsco-handover")
         CASE(OGS_SBI_SERVICE_NAME_NAMF_COMM)
             SWITCH(message->h.resource.component[0])
             CASE(OGS_SBI_RESOURCE_NAME_UE_CONTEXTS)
@@ -2687,6 +2701,10 @@ static int parse_json(ogs_sbi_message_t *message,
                         ogs_error("HTTP ERROR Status : %d",
                             message->res_status);
                     }
+                    break;
+                
+                CASE("prepare")
+                    /* [NSCO] handover prepare - skip */
                     break;
 
                 DEFAULT

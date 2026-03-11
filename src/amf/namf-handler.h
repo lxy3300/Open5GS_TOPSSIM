@@ -43,6 +43,11 @@ int amf_namf_comm_handle_registration_status_update_request(
 int amf_namf_comm_handle_registration_status_update_response(
         ogs_sbi_message_t *recvmsg, amf_ue_t *amf_ue);
 
+// ============= add new ==============
+int amf_nsco_handle_prepare_handover(
+        ogs_sbi_stream_t *stream, ogs_sbi_message_t *recvmsg);
+
+        
 #ifdef __cplusplus
 }
 #endif

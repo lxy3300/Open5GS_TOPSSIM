@@ -115,8 +115,10 @@ smf:
   session:
     - subnet: 10.47.0.0/16
       gateway: 10.47.0.1
+      dev: ogstun3
     - subnet: 2001:db8:face::/48
       gateway: 2001:db8:face::1
+      dev: ogstun3
   dns:
     - 8.8.8.8
     - 8.8.4.4

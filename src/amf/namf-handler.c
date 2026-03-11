@@ -1969,3 +1969,34 @@ int amf_namf_comm_handle_registration_status_update_response(
 
     return OGS_OK;
 }
+
+
+// ================ add new ===============
+
+int amf_nsco_handle_prepare_handover(
+        ogs_sbi_stream_t *stream, ogs_sbi_message_t *recvmsg)
+{
+    char *supi = NULL;
+
+    ogs_assert(stream);
+    ogs_assert(recvmsg);
+
+    /* URL: /nsco-handover/v1/ue-contexts/{supi}/prepare
+     * component[0] = "ue-contexts"
+     * component[1] = supi
+     * component[2] = "prepare"
+     */
+    supi = recvmsg->h.resource.component[1];
+    if (!supi) {
+        ogs_assert(true ==
+            ogs_sbi_server_send_error(stream,
+                OGS_SBI_HTTP_STATUS_BAD_REQUEST, recvmsg,
+                "No SUPI in URL", NULL, NULL));
+        return OGS_ERROR;
+    }
+
+    ogs_info("[NSCO] prepare-handover received for SUPI: %s", supi);
+
+    ogs_assert(true == ogs_sbi_send_http_status_no_content(stream));
+    return OGS_OK;
+}

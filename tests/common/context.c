@@ -1599,11 +1599,12 @@ bson_t *test_db_new_simple(test_ue_t *test_ue)
                             "pre_emption_capability", BCON_INT32(1),
                         "}",
                     "}",
-#if 0
-                    "lbo_roaming_allowed", BCON_BOOL(true),
-#else
+// #if 0
+//                     "lbo_roaming_allowed", BCON_BOOL(true),
+// #else
+                    // "lbo_roaming_allowed", BCON_BOOL(true),
                     "lbo_roaming_allowed", BCON_BOOL(false),
-#endif
+// #endif
                 "}", "]",
             "}", "]",
             "security", "{",

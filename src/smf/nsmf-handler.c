@@ -2742,3 +2742,112 @@ cleanup:
 
     return true;
 }
+
+
+bool smf_nsco_handle_create_sm_context(
+    ogs_sbi_stream_t *stream, ogs_sbi_message_t *message)
+{
+    smf_ue_t *smf_ue = NULL;
+    smf_sess_t *sess = NULL;
+
+    OpenAPI_sm_context_create_data_t *SmContextCreateData = NULL;
+    OpenAPI_snssai_t *sNssai = NULL;
+
+    ogs_assert(stream);
+    ogs_assert(message);
+
+    SmContextCreateData = message->SmContextCreateData;
+    if (!SmContextCreateData) {
+        ogs_error("[NSCO] No SmContextCreateData");
+        ogs_assert(true ==
+            ogs_sbi_server_send_error(stream,
+                OGS_SBI_HTTP_STATUS_BAD_REQUEST, message,
+                "No SmContextCreateData", NULL, NULL));
+        return false;
+    }
+
+    if (!SmContextCreateData->supi) {
+        ogs_error("[NSCO] No supi");
+        ogs_assert(true ==
+            ogs_sbi_server_send_error(stream,
+                OGS_SBI_HTTP_STATUS_BAD_REQUEST, message,
+                "No supi", NULL, NULL));
+        return false;
+    }
+
+    if (!SmContextCreateData->dnn) {
+        ogs_error("[NSCO] No dnn");
+        ogs_assert(true ==
+            ogs_sbi_server_send_error(stream,
+                OGS_SBI_HTTP_STATUS_BAD_REQUEST, message,
+                "No dnn", NULL, NULL));
+        return false;
+    }
+
+    sNssai = SmContextCreateData->s_nssai;
+    if (!sNssai) {
+        ogs_error("[NSCO] No sNssai");
+        ogs_assert(true ==
+            ogs_sbi_server_send_error(stream,
+                OGS_SBI_HTTP_STATUS_BAD_REQUEST, message,
+                "No sNssai", NULL, NULL));
+        return false;
+    }
+
+    ogs_info("[NSCO] create_sm_context: supi=%s psi=%d dnn=%s",
+            SmContextCreateData->supi,
+            SmContextCreateData->pdu_session_id,
+            SmContextCreateData->dnn);
+
+    /* Find or create smf_ue */
+    smf_ue = smf_ue_find_by_supi(SmContextCreateData->supi);
+    if (!smf_ue) {
+        smf_ue = smf_ue_add_by_supi(SmContextCreateData->supi);
+        if (!smf_ue) {
+            ogs_error("[NSCO] smf_ue_add_by_supi() failed");
+            ogs_assert(true ==
+                ogs_sbi_server_send_error(stream,
+                    OGS_SBI_HTTP_STATUS_INTERNAL_SERVER_ERROR, message,
+                    "smf_ue_add failed", NULL, NULL));
+            return false;
+        }
+    }
+
+    /* Create session */
+    sess = smf_sess_add_by_psi(smf_ue,
+            (uint8_t)SmContextCreateData->pdu_session_id);
+    if (!sess) {
+        ogs_error("[NSCO] smf_sess_add_by_psi() failed");
+        ogs_assert(true ==
+            ogs_sbi_server_send_error(stream,
+                OGS_SBI_HTTP_STATUS_INTERNAL_SERVER_ERROR, message,
+                "smf_sess_add failed", NULL, NULL));
+        return false;
+    }
+
+    /* Set session info */
+    if (sess->session.name) ogs_free(sess->session.name);
+    sess->session.name = ogs_strdup(SmContextCreateData->dnn);
+
+    sess->s_nssai.sst = sNssai->sst;
+    sess->s_nssai.sd = ogs_s_nssai_sd_from_string(sNssai->sd);
+
+    if (SmContextCreateData->sm_context_status_uri) {
+        if (sess->sm_context_status_uri)
+            ogs_free(sess->sm_context_status_uri);
+        sess->sm_context_status_uri =
+            ogs_strdup(SmContextCreateData->sm_context_status_uri);
+    }
+
+    sess->pti = 1; /* fake PTI for handover */
+
+    ogs_info("[NSCO] Session created: supi=%s psi=%d dnn=%s ref=%s",
+            SmContextCreateData->supi,
+            SmContextCreateData->pdu_session_id,
+            SmContextCreateData->dnn,
+            sess->sm_context_ref);
+
+    ogs_assert(true == ogs_sbi_send_http_status_no_content(stream));
+    return true;
+}
+
